@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMED — Ficha de Saída</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f10; --surface: #141618; --surface2: #1c1f21;
+  --border: #2a2d30; --border2: #363a3e;
+  --text: #e8eaec; --muted: #6b7280;
+  --accent: #3b82f6; --accent-dim: rgba(59,130,246,0.12);
+  --ok: #22c55e; --warn: #f59e0b; --danger: #ef4444;
+  --ok-dim: rgba(34,197,94,0.1); --warn-dim: rgba(245,158,11,0.1); --danger-dim: rgba(239,68,68,0.1);
+  --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;min-height:100vh;padding:32px 16px 60px;display:flex;flex-direction:column;align-items:center;}
+header{width:100%;max-width:760px;display:flex;align-items:baseline;justify-content:space-between;margin-bottom:32px;padding-bottom:16px;border-bottom:0.5px solid var(--border);}
+header h1{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;}
+#relogio{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:6px;padding:20px 24px;width:100%;max-width:760px;margin-bottom:10px;}
+.card-title{font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.label{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+select{width:100%;background:var(--surface2);border:0.5px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 36px 10px 14px;appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;transition:border-color 0.15s;}
+select:hover,select:focus{border-color:var(--accent);}
+select:focus{box-shadow:0 0 0 2px rgba(59,130,246,0.15);}
+select option{background:#1c1f21;}
+select:disabled{opacity:0.4;cursor:not-allowed;}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px;}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:16px;}
+.stat{background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:12px;}
+.stat-label{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.stat-value{font-family:var(--mono);font-size:13px;font-weight:500;}
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.06em;padding:3px 10px;border-radius:3px;}
+.badge::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;}
+.ok{background:var(--ok-dim);color:var(--ok);border:0.5px solid rgba(34,197,94,0.3);}
+.ok::before{background:var(--ok);}
+.warn{background:var(--warn-dim);color:var(--warn);border:0.5px solid rgba(245,158,11,0.3);}
+.warn::before{background:var(--warn);}
+.danger{background:var(--danger-dim);color:var(--danger);border:0.5px solid rgba(239,68,68,0.3);}
+.danger::before{background:var(--danger);}
+.manut-texto{font-size:13px;line-height:1.6;color:var(--text);background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:12px;margin-bottom:8px;}
+.manut-label{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.fotos-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px;}
+.foto-thumb{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;border:0.5px solid var(--border);cursor:pointer;transition:opacity 0.15s;}
+.foto-thumb:hover{opacity:0.8;}
+.checklist-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.check-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:8px 12px;font-size:13px;}
+.check-nome{color:var(--text);}
+.check-val{font-family:var(--mono);font-size:11px;font-weight:500;}
+.check-val.ok-val{color:var(--ok);}
+.check-val.alt-val{color:var(--warn);}
+.check-val.nv-val{color:var(--muted);}
+.missao-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;margin-bottom:6px;cursor:pointer;transition:border-color 0.15s,background 0.15s;}
+.missao-item:hover{border-color:var(--accent);background:rgba(59,130,246,0.05);}
+.missao-item.selected{border-color:var(--accent);background:var(--accent-dim);}
+.missao-hora{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:48px;}
+.missao-desc{flex:1;font-size:13px;}
+.missao-num{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.empty{text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+.loading{text-align:center;padding:24px;font-family:var(--mono);font-size:12px;color:var(--accent);animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.btn{width:100%;max-width:760px;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:background 0.15s,transform 0.1s;margin-top:4px;}
+.btn:disabled{opacity:0.3;cursor:not-allowed;}
+.btn:not(:disabled):hover{background:#2563eb;}
+.btn:not(:disabled):active{transform:scale(0.99);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:0.5px solid var(--border2);border-radius:6px;padding:10px 24px;font-family:var(--mono);font-size:12px;color:var(--text);transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);z-index:100;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.ok-t{color:var(--ok);border-color:rgba(34,197,94,0.3);}
+.toast.err-t{color:var(--danger);border-color:rgba(239,68,68,0.3);}
+.hidden{display:none;}
+.divider{height:0.5px;background:var(--border);margin:16px 0;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SAMED — Ficha de Saída</h1>
+  <span id="relogio"></span>
+</header>
+
+<!-- 01 Selecionar Viatura -->
+<div class="card">
+  <div class="card-title"><span>01 — Selecionar Viatura</span></div>
+  <div class="label">Registro</div>
+  <select id="sel-viatura" onchange="selecionarViatura(this.value)">
+    <option value="">— carregando viaturas... —</option>
+  </select>
+</div>
+
+<!-- 02 Ficha de Manutenção -->
+<div class="card hidden" id="card-manut">
+  <div class="card-title">
+    <span>02 — Ficha de Manutenção · SAMED 1</span>
+    <span id="badge-status"></span>
+  </div>
+  <div class="grid3">
+    <div class="stat"><div class="stat-label">Hodômetro</div><div class="stat-value" id="hodometro">—</div></div>
+    <div class="stat"><div class="stat-label">Antepenúltima</div><div class="stat-value" id="manut-ante" style="font-size:11px;line-height:1.4;"></div></div>
+    <div class="stat"><div class="stat-label">Última manutenção</div><div class="stat-value" id="manut-ultima" style="font-size:11px;line-height:1.4;"></div></div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="card-title"><span>Checklist</span></div>
+  <div class="checklist-grid" id="checklist-grid"></div>
+
+  <div class="divider"></div>
+  <div class="card-title"><span>Fotos — Manutenção</span></div>
+  <div class="fotos-grid" id="fotos-manut"></div>
+
+  <div class="divider"></div>
+  <div class="card-title"><span>Fotos — Última Missão</span></div>
+  <div class="fotos-grid" id="fotos-viatura"></div>
+</div>
+
+<!-- 03 Missões -->
+<div class="card hidden" id="card-missoes">
+  <div class="card-title">
+    <span>03 — Missões do Dia · SAMED 2</span>
+    <span id="count-missoes" style="font-size:11px;"></span>
+  </div>
+  <div class="label">Selecionar Missão</div>
+  <div id="lista-missoes"></div>
+</div>
+
+<!-- Botão -->
+<button class="btn" id="btn-ficha" disabled onclick="abrirFicha()">Abrir Ficha de Saída →</button>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://samed-api.dtsgapco.workers.dev';
+let dadosViatura = null;
+let missaoSelecionada = null;
+
+// Relógio
+function tick() {
+  document.getElementById('relogio').textContent =
+    new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+tick(); setInterval(tick, 1000);
+
+// Carrega lista de viaturas
+async function carregarViaturas() {
+  try {
+    const r = await fetch(`${API}/viaturas`);
+    const lista = await r.json();
+    const sel = document.getElementById('sel-viatura');
+    sel.innerHTML = '<option value="">— selecione a viatura —</option>' +
+      lista.map(v => `<option value="${v}">${v}</option>`).join('');
+  } catch(e) {
+    document.getElementById('sel-viatura').innerHTML = '<option value="">Erro ao carregar viaturas</option>';
+  }
+}
+carregarViaturas();
+
+// Seleciona viatura e carrega dados
+async function selecionarViatura(id) {
+  missaoSelecionada = null;
+  dadosViatura = null;
+  document.getElementById('btn-ficha').disabled = true;
+  document.getElementById('card-manut').classList.add('hidden');
+  document.getElementById('card-missoes').classList.add('hidden');
+  if (!id) return;
+
+  document.getElementById('card-manut').classList.remove('hidden');
+  document.getElementById('card-manut').querySelector('.card-title span:first-child').textContent = '02 — carregando...';
+  document.getElementById('card-missoes').classList.remove('hidden');
+  document.getElementById('lista-missoes').innerHTML = '<div class="loading">buscando dados...</div>';
+
+  try {
+    const r = await fetch(`${API}/viatura?id=${encodeURIComponent(id)}`);
+    const d = await r.json();
+    dadosViatura = d;
+    renderViatura(d);
+  } catch(e) {
+    toast('Erro ao buscar viatura', 'err');
+  }
+}
+
+function renderViatura(d) {
+  document.getElementById('card-manut').querySelector('.card-title span:first-child').textContent = '02 — Ficha de Manutenção · SAMED 1';
+  document.getElementById('hodometro').textContent = d.hodometro ? d.hodometro + ' km' : '—';
+  document.getElementById('manut-ante').textContent  = d.manutencao.antepenultima || '—';
+  document.getElementById('manut-ultima').textContent = d.manutencao.ultima || '—';
+
+  // Badge status (baseado em palavras-chave)
+  const txt = (d.manutencao.ultima || '').toLowerCase();
+  let cls = 'ok', lbl = 'operacional';
+  if (txt.includes('vazamento') || txt.includes('quebrad') || txt.includes('vencid')) { cls='danger'; lbl='crítico'; }
+  else if (txt.includes('rasgo') || txt.includes('arranhad') || txt.includes('trincad') || txt.includes('amassad')) { cls='warn'; lbl='atenção'; }
+  document.getElementById('badge-status').innerHTML = `<span class="badge ${cls}">${lbl}</span>`;
+
+  // Checklist
+  const cl = d.checklist || {};
+  document.getElementById('checklist-grid').innerHTML = Object.entries(cl).map(([k, v]) => {
+    const cls = v === 'OK' ? 'ok-val' : v === 'Alt.' ? 'alt-val' : 'nv-val';
+    return `<div class="check-item"><span class="check-nome">${k}</span><span class="check-val ${cls}">${v}</span></div>`;
+  }).join('');
+
+  // Fotos manutenção
+  const fm = document.getElementById('fotos-manut');
+  fm.innerHTML = (d.fotosManutencao || []).length
+    ? d.fotosManutencao.map(u => `<img class="foto-thumb" src="${u}" onclick="abrirFoto('${u}')" loading="lazy">`).join('')
+    : '<span style="font-size:12px;color:var(--muted)">sem fotos registradas</span>';
+
+  // Fotos viatura
+  const fv = document.getElementById('fotos-viatura');
+  fv.innerHTML = (d.fotosViatura || []).length
+    ? d.fotosViatura.map(u => `<img class="foto-thumb" src="${u}" onclick="abrirFoto('${u}')" loading="lazy">`).join('')
+    : '<span style="font-size:12px;color:var(--muted)">sem fotos registradas</span>';
+
+  // Missões
+  const missoes = d.missoes || [];
+  document.getElementById('count-missoes').textContent = missoes.length + ' missão(ões)';
+  if (!missoes.length) {
+    document.getElementById('lista-missoes').innerHTML = '<div class="empty">nenhuma missão registrada para esta viatura</div>';
+    return;
+  }
+  document.getElementById('lista-missoes').innerHTML = missoes.map(m => `
+    <div class="missao-item" id="mi-${m.indice}" onclick="selecionarMissao(${m.indice})">
+      <span class="missao-hora">${m.horario}</span>
+      <span class="missao-desc">${m.descricao}</span>
+      <span class="missao-num">${m.sistema} · ${m.numeroRegistro}</span>
+    </div>
+  `).join('');
+}
+
+function selecionarMissao(idx) {
+  document.querySelectorAll('.missao-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('mi-' + idx).classList.add('selected');
+  missaoSelecionada = idx;
+  document.getElementById('btn-ficha').disabled = false;
+}
+
+async function abrirFicha() {
+  if (!dadosViatura || missaoSelecionada === null) return;
+  const btn = document.getElementById('btn-ficha');
+  btn.disabled = true;
+  btn.textContent = 'gerando ficha...';
+  try {
+    const r = await fetch(`${API}/tally?viatura=${encodeURIComponent(dadosViatura.registro)}&missao=${missaoSelecionada}`);
+    const data = await r.json();
+    if (data.url) {
+      window.open(data.url, '_blank');
+      toast('Tally aberto com dados preenchidos', 'ok');
+    } else {
+      toast('Erro ao gerar URL do Tally', 'err');
+    }
+  } catch(e) {
+    toast('Erro de conexão', 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Abrir Ficha de Saída →';
+}
+
+function abrirFoto(url) { window.open(url, '_blank'); }
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type === 'ok' ? 'ok-t' : 'err-t');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+</script>
+</body>
+</html>
