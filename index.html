@@ -236,7 +236,7 @@ function selecionarMissao(idx) {
 }
 
 async function abrirFicha() {
-  if (!dadosViatura || missaoSelecionada === null) return;
+  if (!dadosViatura) return;
   const btn = document.getElementById('btn-ficha');
   btn.disabled = true;
   btn.textContent = 'gerando ficha...';
