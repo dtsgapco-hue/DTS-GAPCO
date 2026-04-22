@@ -192,6 +192,7 @@ function renderViatura(d) {
   if (txt.includes('vazamento') || txt.includes('quebrad') || txt.includes('vencid')) { cls='danger'; lbl='crítico'; }
   else if (txt.includes('rasgo') || txt.includes('arranhad') || txt.includes('trincad') || txt.includes('amassad')) { cls='warn'; lbl='atenção'; }
   document.getElementById('badge-status').innerHTML = `<span class="badge ${cls}">${lbl}</span>`;
+  document.getElementById('btn-ficha').disabled = false;
 
   // Checklist
   const cl = d.checklist || {};
