@@ -242,7 +242,8 @@ async function abrirFicha() {
   btn.disabled = true;
   btn.textContent = 'gerando ficha...';
   try {
-    const r = await fetch(`${API}/tally?viatura=${encodeURIComponent(dadosViatura.registro)}&missao=${missaoSelecionada}`);
+    const missaoParam = missaoSelecionada !== null ? `&missao=${missaoSelecionada}` : '';
+    const r = await fetch(`${API}/tally?viatura=${encodeURIComponent(dadosViatura.registro)}${missaoParam}`);
     const data = await r.json();
     if (data.url) {
       window.open(data.url, '_blank');
