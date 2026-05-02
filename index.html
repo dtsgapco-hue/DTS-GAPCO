@@ -432,8 +432,8 @@
     </svg>
   </div>
   <div>
-    <h1>VISTORIA DE VIATURA</h1>
-    <p>SISTEMA DE VERIFICAÇÃO PRÉ-MISSÃO</p>
+    <h1 style="font-size:1.35rem;">SISTEMA DE APOIO AO MOTORISTA DA DTS</h1>
+    <p style="color:var(--accent2);font-size:0.75rem;letter-spacing:1.5px;">SISTEMA DE VERIFICAÇÃO PRÉ-MISSÃO</p>
   </div>
 </header>
 
@@ -450,7 +450,7 @@
 
   <!-- Intro text -->
   <div style="margin-bottom:20px; padding:18px 20px; background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:var(--radius);">
-    <div style="font-family:var(--font-head);font-size:1.4rem;letter-spacing:3px;color:var(--accent2);margin-bottom:6px;">SISTEMA DE APOIO AO MOTORISTA</div>
+    <div style="font-family:var(--font-head);font-size:1.4rem;letter-spacing:3px;color:var(--accent2);margin-bottom:6px;">FICHA DE VIATURA</div>
     <div style="font-family:var(--font-body);font-size:0.9rem;color:var(--text2);line-height:1.6;">Verifique as condições da viatura que irá realizar a missão selecionando o <span style="font-family:var(--font-mono);color:var(--accent);letter-spacing:1px;">REG.FAB</span> na lista a seguir.</div>
   </div>
 
@@ -477,6 +477,18 @@
         <option value="">— carregando registros... —</option>
       </select>
     </div>
+  </div>
+
+  <!-- Botão sem viatura selecionada -->
+  <div id="bloco-sem-viatura" style="margin-bottom:20px;text-align:center;">
+    <div style="font-family:var(--font-mono);font-size:0.68rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Não encontrou o REG.FAB?</div>
+    <a href="https://tally.so/r/obBRAX" target="_blank" rel="noopener"
+      style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 20px;background:var(--surface);border:1.5px dashed #3a4832;border-radius:var(--radius);font-family:var(--font-head);font-size:1.2rem;letter-spacing:3px;color:var(--text2);text-decoration:none;transition:border-color .2s,color .2s;"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent2)'"
+      onmouseout="this.style.borderColor='#3a4832';this.style.color='var(--text2)'">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0;opacity:.7"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      ABRIR FORMULÁRIO SEM VIATURA SELECIONADA
+    </a>
   </div>
 
   <!-- Dynamic content area -->
@@ -522,11 +534,14 @@ function populateSelect(regs) {
 // ── ON SELECT ────────────────────────────────────────────
 function onRegChange() {
   var reg = document.getElementById('regSelect').value;
+  var blocoSem = document.getElementById('bloco-sem-viatura');
   if (!reg) {
+    blocoSem.style.display = '';
     document.getElementById('content').innerHTML =
       '<div class="state-msg">AGUARDANDO SELEÇÃO</div>';
     return;
   }
+  blocoSem.style.display = 'none';
   document.getElementById('content').innerHTML =
     '<div class="state-msg"><div class="spinner"></div>BUSCANDO DADOS...</div>';
 
