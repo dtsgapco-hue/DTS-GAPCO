@@ -364,21 +364,55 @@
   /* ── MODAL LIGHTBOX ───────────────────────────────────── */
   #lightbox {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.92);
+    background: rgba(0,0,0,0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
     z-index: 999;
     align-items: center; justify-content: center;
+    transition: background .25s ease, backdrop-filter .25s ease;
   }
-  #lightbox.open { display: flex; }
+  #lightbox.open {
+    display: flex;
+    background: rgba(0,0,0,.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: lb-fade-in .25s ease forwards;
+  }
+  @keyframes lb-fade-in {
+    from { background: rgba(0,0,0,0); }
+    to   { background: rgba(0,0,0,.88); }
+  }
+  #lb-wrap {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    animation: lb-zoom-in .25s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  @keyframes lb-zoom-in {
+    from { opacity: 0; transform: scale(.88); }
+    to   { opacity: 1; transform: scale(1); }
+  }
   #lightbox img {
     max-width: 95vw; max-height: 90vh;
     border-radius: var(--radius);
     object-fit: contain;
+    box-shadow: 0 24px 80px rgba(0,0,0,.8);
+    display: block;
   }
-  #lightbox button {
-    position: absolute; top: 16px; right: 16px;
-    background: none; border: none; color: #fff;
-    font-size: 2rem; cursor: pointer; line-height: 1;
+  #lb-close {
+    position: fixed; top: 16px; right: 16px;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+    transition: background .15s;
+    z-index: 1000;
   }
+  #lb-close:hover { background: rgba(255,255,255,.25); }
 
   /* ── RESPONSIVE ───────────────────────────────────────── */
   @media (max-width: 420px) {
@@ -405,8 +439,10 @@
 
 <!-- ── LIGHTBOX ─────────────────────────────────────────── -->
 <div id="lightbox">
-  <button onclick="closeLightbox()">✕</button>
-  <img id="lbImg" src="" alt="Foto ampliada">
+  <button id="lb-close" onclick="closeLightbox()" title="Fechar">✕</button>
+  <div id="lb-wrap">
+    <img id="lbImg" src="" alt="Foto ampliada">
+  </div>
 </div>
 
 <!-- ── MAIN ─────────────────────────────────────────────── -->
@@ -667,15 +703,30 @@ function buildTallyUrl(reg, mission) {
 
 // ── LIGHTBOX ─────────────────────────────────────────────
 function openLightbox(url) {
-  document.getElementById('lbImg').src = url;
-  document.getElementById('lightbox').classList.add('open');
+  var lb  = document.getElementById('lightbox');
+  var img = document.getElementById('lbImg');
+  // reinicia animação do wrap
+  var wrap = document.getElementById('lb-wrap');
+  wrap.style.animation = 'none';
+  img.src = url;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // força reflow para a animação rodar novamente
+  void wrap.offsetWidth;
+  wrap.style.animation = '';
 }
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('open');
   document.getElementById('lbImg').src = '';
+  document.body.style.overflow = '';
 }
+// Fecha clicando no fundo escuro (mas não na imagem)
 document.getElementById('lightbox').addEventListener('click', function(e) {
-  if (e.target === this) closeLightbox();
+  if (e.target === this || e.target === document.getElementById('lb-wrap')) closeLightbox();
+});
+// Fecha com ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
 });
 
 // ── UTILS ─────────────────────────────────────────────────
