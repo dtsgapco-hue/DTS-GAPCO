@@ -459,7 +459,9 @@ window.addEventListener('load', function() {
 function populateSelect(regs) {
   var sel = document.getElementById('regSelect');
   sel.innerHTML = '<option value="">— selecione uma viatura —</option>';
-  regs.forEach(function(r) {
+  regs.slice().sort(function(a, b) {
+    return String(b).localeCompare(String(a), 'pt-BR', { numeric: true });
+  }).forEach(function(r) {
     var opt = document.createElement('option');
     opt.value = opt.textContent = r;
     sel.appendChild(opt);
@@ -630,15 +632,17 @@ function renderAll(reg, vData, missions) {
     html += '</a>';
   }
 
-  // Botão fixo no final — missão não listada
-  if (vData) {
+  // Botão fixo no final — missão não listada (só aparece quando há missões)
+  if (vData && missions && missions.length > 0) {
     var tallySimples = buildTallyUrl(reg, null);
     html += '<div style="margin-top:32px;padding-top:20px;border-top:1px dashed var(--border);">';
-    html += '<div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);letter-spacing:2px;text-align:center;margin-bottom:10px;">MISSÃO NÃO LISTADA ACIMA?</div>';
+    html += '<div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--warn);letter-spacing:2px;text-align:center;margin-bottom:10px;">&#9888; MISSÃO NÃO LISTADA ACIMA?</div>';
     html += '<a href="' + esc(tallySimples) + '" target="_blank" rel="noopener" ';
-    html += 'style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;';
-    html += 'background:transparent;border:1px solid var(--border);border-radius:var(--radius);';
-    html += 'font-family:var(--font-mono);font-size:0.72rem;letter-spacing:2px;color:var(--text2);text-decoration:none;">';
+    html += 'style="display:flex;align-items:center;justify-content:center;gap:10px;padding:15px;';
+    html += 'background:#2a1f00;border:2px solid #f59e0b;border-radius:var(--radius);';
+    html += 'font-family:var(--font-head);font-size:1.25rem;letter-spacing:3px;color:#fbbf24;text-decoration:none;';
+    html += 'box-shadow:0 0 20px rgba(245,158,11,0.4);">';
+    html += '<svg viewBox="0 0 24 24" fill="#fbbf24" style="width:20px;height:20px;flex-shrink:0"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
     html += 'ABRIR FORMULÁRIO SÓ COM REG.FAB';
     html += '</a>';
     html += '</div>';
