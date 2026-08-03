@@ -506,7 +506,27 @@
 
 <script>
 // ── CONFIG ───────────────────────────────────────────────
+// API Cloudflare Workers — mantém hodômetro, manutenções, checklist e fotos.
 var API = 'https://samed-api.dtsgapco.workers.dev';
+
+// API Google Apps Script — busca as MISSÕES PROGRAMADAS da viatura.
+// ⚠️ Substitua SEU_DEPLOY_ID pelo ID do seu deploy do Apps Script.
+//    URL completa do deploy tem formato:
+//    https://script.google.com/macros/s/AKfycbxxxxXXX/exec
+//    O que vai abaixo é só a parte antes de /exec.
+var API_MISSOES = 'https://script.google.com/macros/s/SEU_DEPLOY_ID/exec';
+
+// Helper: retorna data de hoje no formato YYYY-MM-DD (fuso de Brasília).
+function dataHojeISO() {
+  var agora = new Date();
+  // Converte para fuso America/Sao_Paulo viatoLocaleString + ajuste manual
+  var utc = agora.getTime() + (agora.getTimezoneOffset() * 60000);
+  var br = new Date(utc - 3 * 3600000); // UTC-3 (sem horário de verão)
+  var y = br.getFullYear();
+  var m = String(br.getMonth() + 1).padStart(2, '0');
+  var d = String(br.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + d;
+}
 
 // ── INIT ─────────────────────────────────────────────────
 window.addEventListener('load', function() {
@@ -548,12 +568,38 @@ function onRegChange() {
   document.getElementById('content').innerHTML =
     '<div class="state-msg"><div class="spinner"></div>BUSCANDO DADOS...</div>';
 
-  fetch(API + '/viatura?id=' + encodeURIComponent(reg))
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      // ── Normaliza os dados da API para o formato do renderer ──
+  // === Fetch paralelo ===
+  // 1) API Cloudflare Workers — dados da viatura (hodômetro, manutenções, checklist, fotos)
+  // 2) API Google Apps Script — missões programadas para hoje
+  //
+  // Se a API Apps Script falhar (deploy errado, CORS, etc.), ainda mostramos os
+  // dados da viatura com a seção de missões vazia — o motorista não fica sem o
+  // resto da vistoria.
+  var promiseViatura = fetch(API + '/viatura?id=' + encodeURIComponent(reg))
+    .then(function(r) { return r.json(); });
 
-      // Hodômetro
+  var promiseMissoes = fetch(
+    API_MISSOES +
+    '?page=api_motorista&action=missao_programada' +
+    '&reg=' + encodeURIComponent(reg) +
+    '&data=' + encodeURIComponent(dataHojeISO())
+  )
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      // Apps Script retorna { sucesso, total, dados: [...] }
+      return (j && j.sucesso && Array.isArray(j.dados)) ? j.dados : [];
+    })
+    .catch(function(err) {
+      console.warn('[API Missões] falha ao buscar — usando lista vazia:', err);
+      return [];
+    });
+
+  Promise.all([promiseViatura, promiseMissoes])
+    .then(function(results) {
+      var d = results[0];
+      var missoesAppsScript = results[1];
+
+      // ── Normaliza os dados da viatura (API Cloudflare) ──
       var vData = {};
       vData.hodometro = d.hodometro || '—';
 
@@ -576,13 +622,20 @@ function onRegChange() {
       vData.fotosVeiculo = d.fotosViatura || [];
       vData.fotosPane    = d.fotosManutencao || [];
 
-      // Missões: normaliza campos para o formato do renderer
-      var missions = (d.missoes || []).map(function(m) {
+      // ── Normaliza as missões vindas do Apps Script ──
+      // Campos do Apps Script:
+      //   numero_missao, sistema_origem, tipo_missao, hora_embarque,
+      //   local_embarque, local_destino, motorista, viatura, modelo_viatura,
+      //   observacoes, data_embarque, status
+      //
+      // Campos esperados pelo renderAll():
+      //   horario, sistema, numeroMissao, descricao
+      var missions = (missoesAppsScript || []).map(function(m) {
         return {
-          horario:     m.horario     || '--:--',
-          sistema:     m.sistema     || '',
-          numeroMissao: m.numeroRegistro || m.numeroMissao || '',
-          descricao:   m.descricao   || '(sem descrição)'
+          horario:      m.hora_embarque || '--:--',
+          sistema:      m.sistema_origem || '',
+          numeroMissao: m.numero_missao || '',
+          descricao:    m.tipo_missao || '(sem descrição)'
         };
       });
 
