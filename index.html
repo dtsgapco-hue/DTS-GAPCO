@@ -490,19 +490,24 @@
     }
     .more-info-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
 
-    /* Linha de informações resumidas no card (origem → destino) */
+    /* Trajeto no card (origem → destino) — mobile: empilhado verticalmente */
     .mission-route {
-      display: flex; align-items: center; gap: 8px;
-      flex-wrap: wrap;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text2);
-      margin-bottom: 10px;
-      line-height: 1.4;
     }
-    .mission-route .route-arrow {
-      color: var(--accent);
-      font-size: 0.9rem;
+    .mission-route .route-stop {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 8px 12px;
+      display: block;
+    }
+    .mission-route .route-stop.destino {
+      border-left-color: var(--warn);
     }
     .mission-route .route-label {
       font-size: 0.6rem;
@@ -510,16 +515,22 @@
       letter-spacing: 1.5px;
       text-transform: uppercase;
       display: block;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
     }
     .mission-route .route-point {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 6px 10px;
-      flex: 1;
-      min-width: 0;
+      font-size: 0.85rem;
+      color: var(--text);
       word-break: break-word;
+      line-height: 1.4;
+      display: block;
+    }
+    .mission-route .route-arrow {
+      align-self: center;
+      color: var(--accent);
+      font-size: 1rem;
+      line-height: 1;
+      transform: rotate(90deg);
+      margin: -1px 0;
     }
   }
 
@@ -546,35 +557,19 @@
     }
     .more-info-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
 
+    /* Trajeto no card — desktop: lado a lado */
     .mission-route {
-      display: flex; align-items: center; gap: 8px;
-      flex-wrap: wrap;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text2);
-      margin-bottom: 10px;
-      line-height: 1.4;
+      flex-direction: row;
+      align-items: stretch;
+      gap: 8px;
     }
-    .mission-route .route-arrow {
-      color: var(--accent);
-      font-size: 0.9rem;
-    }
-    .mission-route .route-label {
-      font-size: 0.6rem;
-      color: var(--muted);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 2px;
-    }
-    .mission-route .route-point {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 6px 10px;
+    .mission-route .route-stop {
       flex: 1;
       min-width: 0;
-      word-break: break-word;
+    }
+    .mission-route .route-arrow {
+      transform: none;
+      align-self: center;
     }
   }
 
@@ -739,7 +734,12 @@
     cursor: pointer;
     transition: transform .1s, background .15s;
     -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    color: inherit;
   }
+  button.nav-btn:disabled { opacity: 0.55; cursor: wait; }
   .nav-btn:active { transform: scale(.97); }
   .nav-btn svg { width: 24px; height: 24px; }
   .nav-btn.waze   { color: #8fc9ff; border-color: #2a5a8f; }
@@ -900,7 +900,7 @@ var API = 'https://samed-api.dtsgapco.workers.dev';
 //    URL completa do deploy tem formato:
 //    https://script.google.com/macros/s/AKfycbxxxxXXX/exec
 //    O que vai abaixo é só a parte antes de /exec.
-var API_MISSOES = 'https://script.google.com/macros/s/AKfycbw-5UH5oUjDmS7S-cZSytc01Bs_5DicQSBGDP_DK_NyJDVlyA2Xtyk7bClb6wI6gds2Ag/exec';
+var API_MISSOES = 'https://script.google.com/macros/s/SEU_DEPLOY_ID/exec';
 
 // Helper: retorna data de hoje no formato YYYY-MM-DD (fuso de Brasília).
 function dataHojeISO() {
@@ -1138,17 +1138,17 @@ function renderAll(reg, vData, missions) {
       if (m.localEmbarque || m.localDestino) {
         html += '<div class="mission-route">';
         if (m.localEmbarque) {
-          html += '<div style="flex:1; min-width:0;">';
-          html += '<span class="route-label">Origem</span>';
+          html += '<div class="route-stop">';
+          html += '<span class="route-label">\uD83D\uDCCD Embarque</span>';
           html += '<span class="route-point">' + esc(m.localEmbarque) + '</span>';
           html += '</div>';
         }
         if (m.localEmbarque && m.localDestino) {
-          html += '<span class="route-arrow">➜</span>';
+          html += '<span class="route-arrow">\u27A1</span>';
         }
         if (m.localDestino) {
-          html += '<div style="flex:1; min-width:0;">';
-          html += '<span class="route-label">Destino</span>';
+          html += '<div class="route-stop destino">';
+          html += '<span class="route-label">\uD83C\uDFC1 Destino</span>';
           html += '<span class="route-point">' + esc(m.localDestino) + '</span>';
           html += '</div>';
         }
@@ -1300,52 +1300,43 @@ function openMissionModal(idx) {
   }
 
   // ── SEÇÃO DE NAVEGAÇÃO (Waze / Google Maps / Apple Maps) ──
+  // Rota: posição atual (GPS) → embarque (parada 1) → destino (parada 2)
   if (m.localEmbarque || m.localDestino) {
     c += '<div class="nav-section">';
     c += '<div class="nav-section-title">▶ ABRIR ROTA NO NAVEGADOR</div>';
+    c += '<div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text2);text-align:center;line-height:1.55;margin-bottom:12px;padding:9px 10px;background:rgba(126,184,50,0.06);border:1px dashed var(--border);border-radius:4px;">';
+    c += 'Rota: <strong style="color:var(--accent2);">📍 Sua posição</strong> ➜ <strong style="color:var(--accent2);">Embarque</strong> ➜ <strong style="color:var(--accent2);">Destino</strong><br>';
+    c += '<span style="color:var(--muted);">será pedido acesso ao GPS</span>';
+    c += '</div>';
     c += '<div class="nav-grid">';
 
-    // Waze — usa destino como endpoint
-    if (m.localDestino) {
-      var wazeUrl = 'https://waze.com/ul?q=' + encodeURIComponent(m.localDestino) + '&navigate=yes';
-      c += '<a class="nav-btn waze" href="' + esc(wazeUrl) + '" target="_blank" rel="noopener">';
-      c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm0 14.5c-3 0-5.5-2.5-5.5-5.5S9 5.5 12 5.5 17.5 8 17.5 11 15 16.5 12 16.5z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>';
-      c += 'WAZE';
-      c += '</a>';
-    }
-
-    // Google Maps — rota com origem e destino
-    var gmapsUrl = 'https://www.google.com/maps/dir/?api=1&travelmode=driving';
-    if (m.localEmbarque) gmapsUrl += '&origin=' + encodeURIComponent(m.localEmbarque);
-    if (m.localDestino)  gmapsUrl += '&destination=' + encodeURIComponent(m.localDestino);
-    c += '<a class="nav-btn gmaps" href="' + esc(gmapsUrl) + '" target="_blank" rel="noopener">';
+    // Google Maps — suporta waypoints (múltiplas paradas)
+    c += '<button type="button" class="nav-btn gmaps" onclick="abrirRotaApp(\'gmaps\', ' + idx + ', event)">';
     c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>';
-    c += 'MAPS';
-    c += '</a>';
+    c += '<span class="nav-btn-label">MAPS</span>';
+    c += '</button>';
 
-    // Apple Maps — rota com destino (e origem se houver)
-    if (m.localDestino) {
-      var amapsUrl = 'https://maps.apple.com/?q=' + encodeURIComponent(m.localDestino);
-      if (m.localEmbarque) amapsUrl += '&sll=' + encodeURIComponent(m.localEmbarque);
-      amapsUrl += '&dirflg=d';
-      c += '<a class="nav-btn amaps" href="' + esc(amapsUrl) + '" target="_blank" rel="noopener">';
-      c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm-1 13l-3-3 1.4-1.4L11 12.2l4.6-4.6L17 9l-6 6z"/></svg>';
-      c += 'APPLE';
-      c += '</a>';
-    } else {
-      // Sem destino, só com origem — não faz sentido para Apple Maps, deixa vazio
-      c += '<span></span>';
-    }
+    // Apple Maps — múltiplas paradas via "+to+" no daddr
+    c += '<button type="button" class="nav-btn amaps" onclick="abrirRotaApp(\'amaps\', ' + idx + ', event)">';
+    c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm-1 13l-3-3 1.4-1.4L11 12.2l4.6-4.6L17 9l-6 6z"/></svg>';
+    c += '<span class="nav-btn-label">iPHONE</span>';
+    c += '</button>';
+
+    // Waze — não suporta múltiplas paradas; abre com EMBARQUE como destino
+    c += '<button type="button" class="nav-btn waze" onclick="abrirRotaApp(\'waze\', ' + idx + ', event)">';
+    c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm0 14.5c-3 0-5.5-2.5-5.5-5.5S9 5.5 12 5.5 17.5 8 17.5 11 15 16.5 12 16.5z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>';
+    c += '<span class="nav-btn-label">WAZE</span>';
+    c += '</button>';
 
     c += '</div>'; // nav-grid
 
-    // Botão copiar trajeto (texto formatado para colar em qualquer app)
-    var trajetoTxt = '';
-    if (m.localEmbarque) trajetoTxt += 'ORIGEM: ' + m.localEmbarque;
-    if (m.localEmbarque && m.localDestino) trajetoTxt += '\n➜\n';
-    if (m.localDestino) trajetoTxt += 'DESTINO: ' + m.localDestino;
+    // Aviso sobre Waze (não suporta múltiplas paradas)
+    c += '<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);text-align:center;margin:-2px 0 10px;line-height:1.45;">';
+    c += '⚠ Waze: apenas 1ª parada (embarque). Adicione o destino manualmente após o embarque.';
+    c += '</div>';
 
-    c += '<button class="copy-btn" onclick="copiarTrajeto(this, ' + idx + ')" id="btnCopyRoute">';
+    // Botão copiar trajeto (texto formatado para colar em qualquer app)
+    c += '<button type="button" class="copy-btn" onclick="copiarTrajeto(this, ' + idx + ')" id="btnCopyRoute">';
     c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
     c += '<span class="copy-label">COPIAR TRAJETO</span>';
     c += '</button>';
@@ -1367,6 +1358,126 @@ function openMissionModal(idx) {
 function closeMissionModal() {
   document.getElementById('missionModal').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ── ABRIR ROTA NO APP DE NAVEGAÇÃO (com GPS) ─────────────
+// Rota: posição atual (GPS) → embarque (parada 1) → destino (parada 2)
+// Waze NÃO suporta múltiplas paradas — abre apenas com o embarque.
+function abrirRotaApp(app, idx, evt) {
+  var m = currentMissions[idx];
+  if (!m) return;
+
+  if (!m.localEmbarque && !m.localDestino) {
+    alert('Esta missão não possui locais de embarque/destino.');
+    return;
+  }
+
+  // Sem geolocation no navegador — abre sem origem
+  if (!navigator.geolocation) {
+    _abrirRotaComURL(app, m, null);
+    return;
+  }
+
+  // Feedback visual no botão
+  var btn = (evt && evt.currentTarget) || null;
+  var originalHTML = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerHTML = '<span style="font-size:0.7rem;letter-spacing:1px;">📡 GPS...</span>';
+    btn.disabled = true;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      // Sucesso — origem = posição atual (lat,lng)
+      var origin = pos.coords.latitude + ',' + pos.coords.longitude;
+      if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+      _abrirRotaComURL(app, m, origin);
+    },
+    function(err) {
+      if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+      var msg = 'Não foi possível obter sua localização GPS.';
+      if (err && err.code === 1) {
+        msg += '\n\nPermissão negada.';
+      } else if (err && err.code === 3) {
+        msg += '\n\nTempo limite esgotado.';
+      }
+      msg += '\n\nA rota será aberta sem a origem (usando embarque como ponto inicial).';
+      alert(msg);
+      _abrirRotaComURL(app, m, null);
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+  );
+}
+
+// Constrói a URL do app escolhido e abre via window.location.href
+// (universal links — abre o app nativo no iOS/Android).
+function _abrirRotaComURL(app, m, origin) {
+  var embarque = m.localEmbarque || '';
+  var destino  = m.localDestino  || '';
+  var url = '';
+
+  if (app === 'gmaps') {
+    // Google Maps — suporta waypoints (múltiplas paradas)
+    url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving';
+    if (origin) {
+      // Origem = posição atual; waypoint = embarque; destino = destino
+      url += '&origin=' + encodeURIComponent(origin);
+      if (embarque && destino) {
+        url += '&destination=' + encodeURIComponent(destino);
+        url += '&waypoints=' + encodeURIComponent(embarque);
+      } else if (destino) {
+        url += '&destination=' + encodeURIComponent(destino);
+      } else if (embarque) {
+        url += '&destination=' + encodeURIComponent(embarque);
+      }
+    } else {
+      // Sem GPS — usa embarque como origem (se houver)
+      if (embarque && destino) {
+        url += '&origin=' + encodeURIComponent(embarque);
+        url += '&destination=' + encodeURIComponent(destino);
+      } else if (destino) {
+        url += '&destination=' + encodeURIComponent(destino);
+      } else if (embarque) {
+        url += '&destination=' + encodeURIComponent(embarque);
+      }
+    }
+  } else if (app === 'amaps') {
+    // Apple Maps — múltiplas paradas via "+to+" no daddr
+    url = 'https://maps.apple.com/?dirflg=d';
+    if (origin) {
+      url += '&saddr=' + encodeURIComponent(origin);
+      if (embarque && destino) {
+        url += '&daddr=' + encodeURIComponent(embarque) + '+to+' + encodeURIComponent(destino);
+      } else if (destino) {
+        url += '&daddr=' + encodeURIComponent(destino);
+      } else if (embarque) {
+        url += '&daddr=' + encodeURIComponent(embarque);
+      }
+    } else {
+      // Sem GPS — usa embarque como saddr
+      if (embarque && destino) {
+        url += '&saddr=' + encodeURIComponent(embarque);
+        url += '&daddr=' + encodeURIComponent(destino);
+      } else if (destino) {
+        url += '&daddr=' + encodeURIComponent(destino);
+      } else if (embarque) {
+        url += '&daddr=' + encodeURIComponent(embarque);
+      }
+    }
+  } else if (app === 'waze') {
+    // Waze — NÃO suporta múltiplas paradas via URL.
+    // Estratégia: abrir com EMBARQUE (primeira parada) como destino.
+    // O motorista adiciona o destino manualmente após o embarque.
+    var wazeDest = embarque || destino;
+    if (wazeDest) {
+      url = 'https://waze.com/ul?q=' + encodeURIComponent(wazeDest) + '&navigate=yes';
+    }
+  }
+
+  if (url) {
+    // location.href abre o app nativo via universal links
+    window.location.href = url;
+  }
 }
 
 // Fecha modal com ESC
