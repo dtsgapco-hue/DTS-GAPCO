@@ -423,6 +423,378 @@
     .checklist-grid    { grid-template-columns: 1fr; }
     .photos-grid       { grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* ── MOBILE-FIRST ENHANCEMENTS ───────────────────────── */
+  /* Aumenta touch targets e fontes em telas pequenas */
+  @media (max-width: 640px) {
+    main { padding: 14px 12px; }
+    header { padding: 12px 14px; gap: 10px; }
+    header h1 { font-size: 1.35rem; letter-spacing: 1.5px; }
+    header p  { font-size: 0.65rem; }
+
+    .selector-card { padding: 16px; }
+    select#regSelect {
+      padding: 16px 44px 16px 16px;
+      font-size: 1.15rem;
+      letter-spacing: 1.5px;
+    }
+    .selector-label { font-size: 0.72rem; }
+
+    .section-title {
+      font-size: 1.25rem;
+      letter-spacing: 2px;
+      margin: 24px 0 12px;
+    }
+
+    .odo-card { padding: 16px 18px; gap: 14px; }
+    .odo-value { font-size: 2rem; }
+    .odo-label { font-size: 0.7rem; }
+
+    .mission-card {
+      padding: 16px 16px 16px 22px;
+      margin-bottom: 12px;
+    }
+    .mission-time { font-size: 1.7rem; }
+    .mission-desc { font-size: 0.98rem; line-height: 1.55; }
+    .mission-sys { font-size: 0.7rem; padding: 4px 10px; }
+
+    /* Botões maiores para toque */
+    .tally-btn {
+      padding: 18px 18px;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      gap: 12px;
+    }
+    .tally-btn svg { width: 22px; height: 22px; }
+
+    /* Botão "Mais informações" — secundário, contorno */
+    .more-info-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      background: transparent;
+      color: var(--accent2);
+      border: 1.5px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-bottom: 8px;
+      transition: background .15s, color .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .more-info-btn:active {
+      background: rgba(126,184,50,0.15);
+    }
+    .more-info-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* Linha de informações resumidas no card (origem → destino) */
+    .mission-route {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text2);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .mission-route .route-arrow {
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    .mission-route .route-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .mission-route .route-point {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 10px;
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+  }
+
+  /* Botão "Mais informações" — versão desktop (mantém padrão visual) */
+  @media (min-width: 641px) {
+    .more-info-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      background: transparent;
+      color: var(--accent2);
+      border: 1.5px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-bottom: 8px;
+      transition: background .15s, color .15s;
+    }
+    .more-info-btn:hover {
+      background: rgba(126,184,50,0.12);
+    }
+    .more-info-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    .mission-route {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text2);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .mission-route .route-arrow {
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+    .mission-route .route-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .mission-route .route-point {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 10px;
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+  }
+
+  /* ── MODAL MISSÃO (Mais Informações) ─────────────────── */
+  #missionModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0);
+    z-index: 998;
+    align-items: flex-end;
+    justify-content: center;
+    transition: background .25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #missionModal.open {
+    display: flex;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  #missionModal .mm-sheet {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 14px 14px 0 0;
+    width: 100%;
+    max-width: 680px;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px 18px 28px;
+    animation: mm-slide-up .28s cubic-bezier(.22,1,.36,1) forwards;
+    box-shadow: 0 -8px 40px rgba(0,0,0,.6);
+  }
+  @keyframes mm-slide-up {
+    from { transform: translateY(100%); opacity: .6; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  /* Desktop: centraliza em vez de bottom-sheet */
+  @media (min-width: 641px) {
+    #missionModal { align-items: center; }
+    #missionModal .mm-sheet {
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      animation: mm-zoom-in .25s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    @keyframes mm-zoom-in {
+      from { transform: scale(.94); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+  }
+
+  .mm-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mm-title {
+    font-family: var(--font-head);
+    font-size: 1.5rem;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    line-height: 1.1;
+  }
+  .mm-subtitle {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+  .mm-close {
+    flex-shrink: 0;
+    width: 38px; height: 38px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text2);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+    transition: background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mm-close:active { background: var(--border); }
+
+  .mm-row {
+    display: flex; flex-direction: column;
+    gap: 4px;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(58,72,50,0.4);
+  }
+  .mm-row:last-of-type { border-bottom: none; }
+  .mm-label {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .mm-value {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .mm-value.mono { font-family: var(--font-mono); font-size: 0.9rem; }
+  .mm-value.head {
+    font-family: var(--font-head);
+    font-size: 1.4rem;
+    color: var(--accent2);
+    letter-spacing: 2px;
+  }
+  .mm-obs {
+    background: rgba(232,162,37,0.08);
+    border-left: 3px solid var(--warn);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 6px 0;
+    font-size: 0.9rem;
+    color: #e8d090;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  /* ── BOTÕES DE NAVEGAÇÃO (Waze / Maps / Apple) ──────── */
+  .nav-section {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .nav-section-title {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .nav-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .nav-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    padding: 14px 8px;
+    border-radius: var(--radius);
+    border: 1.5px solid;
+    background: var(--surface);
+    text-decoration: none;
+    font-family: var(--font-head);
+    font-size: 0.95rem;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: transform .1s, background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn:active { transform: scale(.97); }
+  .nav-btn svg { width: 24px; height: 24px; }
+  .nav-btn.waze   { color: #8fc9ff; border-color: #2a5a8f; }
+  .nav-btn.waze:active   { background: rgba(47,131,222,0.18); }
+  .nav-btn.gmaps  { color: #ff9c8f; border-color: #8f3a2f; }
+  .nav-btn.gmaps:active  { background: rgba(234,67,32,0.18); }
+  .nav-btn.amaps  { color: #ff9cc4; border-color: #8f2f5a; }
+  .nav-btn.amaps:active  { background: rgba(255,80,128,0.18); }
+
+  .copy-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-family: var(--font-head);
+    font-size: 1.05rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .copy-btn:active {
+    background: rgba(126,184,50,0.1);
+    border-color: var(--accent);
+  }
+  .copy-btn.copied {
+    color: var(--accent2);
+    border-color: var(--accent);
+    border-style: solid;
+  }
+  .copy-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* Botão principal no modal — abrir formulário */
+  .mm-tally {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    font-family: var(--font-head);
+    font-size: 1.25rem;
+    letter-spacing: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    margin-top: 14px;
+    transition: background .15s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mm-tally:active { transform: scale(.98); }
+  .mm-tally svg { width: 22px; height: 22px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -445,6 +817,20 @@
   <button id="lb-close" onclick="closeLightbox()" title="Fechar">✕</button>
   <div id="lb-wrap">
     <img id="lbImg" src="" alt="Foto ampliada">
+  </div>
+</div>
+
+<!-- ── MODAL MISSÃO (Mais Informações) ──────────────────── -->
+<div id="missionModal" onclick="if(event.target===this)closeMissionModal()">
+  <div class="mm-sheet" role="dialog" aria-modal="true" aria-labelledby="mmTitle">
+    <div class="mm-header">
+      <div style="flex:1; min-width:0;">
+        <div id="mmTitle" class="mm-title">DETALHES DA MISSÃO</div>
+        <div id="mmSubtitle" class="mm-subtitle"></div>
+      </div>
+      <button class="mm-close" onclick="closeMissionModal()" title="Fechar" aria-label="Fechar">✕</button>
+    </div>
+    <div id="mmContent"><!-- preenchido via JS --></div>
   </div>
 </div>
 
@@ -630,12 +1016,23 @@ function onRegChange() {
       //
       // Campos esperados pelo renderAll():
       //   horario, sistema, numeroMissao, descricao
+      // ADICIONAL: mantemos os campos extras para o modal "mais informações"
       var missions = (missoesAppsScript || []).map(function(m) {
         return {
-          horario:      m.hora_embarque || '--:--',
-          sistema:      m.sistema_origem || '',
-          numeroMissao: m.numero_missao || '',
-          descricao:    m.tipo_missao || '(sem descrição)'
+          // Campos básicos (usados no card e no botão Tally)
+          horario:       m.hora_embarque || '--:--',
+          sistema:       m.sistema_origem || '',
+          numeroMissao:  m.numero_missao || '',
+          descricao:     m.tipo_missao || '(sem descrição)',
+          // Campos extras para o modal "mais informações"
+          localEmbarque: m.local_embarque || '',
+          localDestino:  m.local_destino || '',
+          motorista:     m.motorista || '',
+          viatura:       m.viatura || '',
+          modeloViatura: m.modelo_viatura || '',
+          observacoes:   m.observacoes || '',
+          dataEmbarque:  m.data_embarque || '',
+          status:        m.status || ''
         };
       });
 
@@ -722,7 +1119,7 @@ function renderAll(reg, vData, missions) {
   if (!missions || missions.length === 0) {
     html += '<div class="no-mission">NENHUMA MISSÃO REGISTRADA PARA HOJE</div>';
   } else {
-    missions.forEach(function(m) {
+    missions.forEach(function(m, idx) {
       html += '<div class="mission-card">';
       html += '<div class="mission-header">';
       html += '<div class="mission-time">' + esc(m.horario || '--:--') + '</div>';
@@ -735,12 +1132,47 @@ function renderAll(reg, vData, missions) {
         html += '<span style="font-family:var(--font-head);font-size:1.6rem;color:var(--accent2);letter-spacing:3px;line-height:1;">' + esc(m.numeroMissao) + '</span>';
         html += '</div>';
       }
-      // Botão principal — missão completa
-      var tallyUrl = buildTallyUrl(reg, m);
-      html += '<a class="tally-btn" href="' + esc(tallyUrl) + '" target="_blank" rel="noopener">';
-      html += '<svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-      html += 'ABRIR FORMULÁRIO DESTA MISSÃO';
-      html += '</a>';
+
+      // ── RESUMO DO TRAJETO (origem → destino) ──
+      // Mostra só se houver pelo menos um dos dois locais
+      if (m.localEmbarque || m.localDestino) {
+        html += '<div class="mission-route">';
+        if (m.localEmbarque) {
+          html += '<div style="flex:1; min-width:0;">';
+          html += '<span class="route-label">Origem</span>';
+          html += '<span class="route-point">' + esc(m.localEmbarque) + '</span>';
+          html += '</div>';
+        }
+        if (m.localEmbarque && m.localDestino) {
+          html += '<span class="route-arrow">➜</span>';
+        }
+        if (m.localDestino) {
+          html += '<div style="flex:1; min-width:0;">';
+          html += '<span class="route-label">Destino</span>';
+          html += '<span class="route-point">' + esc(m.localDestino) + '</span>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      // ── OBSERVAÇÕES RESUMIDAS (truncadas) no card ──
+      if (m.observacoes) {
+        var obsCurta = m.observacoes.length > 60
+          ? m.observacoes.substring(0, 57) + '...'
+          : m.observacoes;
+        html += '<div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--warn);margin-bottom:10px;line-height:1.4;">';
+        html += '⚠ ' + esc(obsCurta);
+        html += '</div>';
+      }
+
+      // ── BOTÃO "MAIS INFORMAÇÕES" (abre modal) ──
+      // Substitui o botão direto do formulário. O usuário vê detalhes + navegação
+      // antes de abrir o formulário Tally.
+      html += '<button class="more-info-btn" onclick="openMissionModal(' + idx + ')">';
+      html += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/></svg>';
+      html += 'MAIS INFORMAÇÕES';
+      html += '</button>';
+
       html += '</div>';
     });
   }
@@ -770,7 +1202,226 @@ function renderAll(reg, vData, missions) {
     html += '</div>';
   }
 
+  // Guarda o reg atual e as missões para o modal acessar
+  currentReg = reg;
+  currentMissions = missions;
+
   document.getElementById('content').innerHTML = html;
+}
+
+// ── ESTADO PARA O MODAL ───────────────────────────────────
+var currentReg = '';
+var currentMissions = [];
+
+// ── MODAL "MAIS INFORMAÇÕES" ──────────────────────────────
+function openMissionModal(idx) {
+  var m = currentMissions[idx];
+  if (!m) return;
+
+  // Subtitle: sistema + horário
+  var subtitleParts = [];
+  if (m.sistema) subtitleParts.push(m.sistema);
+  if (m.horario) subtitleParts.push('Saída: ' + m.horario);
+  document.getElementById('mmSubtitle').textContent = subtitleParts.join('  •  ');
+
+  var c = '';
+  c += '<div class="mm-row">';
+  c += '<span class="mm-label">Nº Missão</span>';
+  c += '<span class="mm-value head">' + esc(m.numeroMissao || '—') + '</span>';
+  c += '</div>';
+
+  c += '<div class="mm-row">';
+  c += '<span class="mm-label">Tipo / Descrição</span>';
+  c += '<span class="mm-value">' + esc(m.descricao || '—') + '</span>';
+  c += '</div>';
+
+  c += '<div class="mm-row">';
+  c += '<span class="mm-label">Sistema de Origem</span>';
+  c += '<span class="mm-value mono">' + esc(m.sistema || '—') + '</span>';
+  c += '</div>';
+
+  if (m.dataEmbarque) {
+    c += '<div class="mm-row">';
+    c += '<span class="mm-label">Data</span>';
+    c += '<span class="mm-value mono">' + esc(m.dataEmbarque) + '</span>';
+    c += '</div>';
+  }
+
+  if (m.horario) {
+    c += '<div class="mm-row">';
+    c += '<span class="mm-label">Horário de Embarque</span>';
+    c += '<span class="mm-value head">' + esc(m.horario) + '</span>';
+    c += '</div>';
+  }
+
+  if (m.localEmbarque) {
+    c += '<div class="mm-row">';
+    c += '<span class="mm-label">📍 Local de Embarque (Origem)</span>';
+    c += '<span class="mm-value">' + esc(m.localEmbarque) + '</span>';
+    c += '</div>';
+  }
+
+  if (m.localDestino) {
+    c += '<div class="mm-row">';
+    c += '<span class="mm-label">🏁 Local de Destino</span>';
+    c += '<span class="mm-value">' + esc(m.localDestino) + '</span>';
+    c += '</div>';
+  }
+
+  if (m.motorista) {
+    c += '<div class="mm-row">';
+    c += '<span class="mm-label">Motorista</span>';
+    c += '<span class="mm-value">' + esc(m.motorista) + '</span>';
+    c += '</div>';
+  }
+
+  if (m.viatura || m.modeloViatura) {
+    c += '<div class="mm-row">';
+    c += '<span class="mm-label">Viatura</span>';
+    c += '<span class="mm-value mono">';
+    c += esc(m.viatura || '—');
+    if (m.modeloViatura) c += ' <span style="color:var(--muted);">(' + esc(m.modeloViatura) + ')</span>';
+    c += '</span>';
+    c += '</div>';
+  }
+
+  if (m.status) {
+    c += '<div class="mm-row">';
+    c += '<span class="mm-label">Status</span>';
+    c += '<span class="mm-value">' + esc(m.status) + '</span>';
+    c += '</div>';
+  }
+
+  if (m.observacoes) {
+    c += '<div class="mm-row" style="border-bottom:none;">';
+    c += '<span class="mm-label">⚠ Observações</span>';
+    c += '<div class="mm-obs">' + esc(m.observacoes) + '</div>';
+    c += '</div>';
+  }
+
+  // ── SEÇÃO DE NAVEGAÇÃO (Waze / Google Maps / Apple Maps) ──
+  if (m.localEmbarque || m.localDestino) {
+    c += '<div class="nav-section">';
+    c += '<div class="nav-section-title">▶ ABRIR ROTA NO NAVEGADOR</div>';
+    c += '<div class="nav-grid">';
+
+    // Waze — usa destino como endpoint
+    if (m.localDestino) {
+      var wazeUrl = 'https://waze.com/ul?q=' + encodeURIComponent(m.localDestino) + '&navigate=yes';
+      c += '<a class="nav-btn waze" href="' + esc(wazeUrl) + '" target="_blank" rel="noopener">';
+      c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm0 14.5c-3 0-5.5-2.5-5.5-5.5S9 5.5 12 5.5 17.5 8 17.5 11 15 16.5 12 16.5z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>';
+      c += 'WAZE';
+      c += '</a>';
+    }
+
+    // Google Maps — rota com origem e destino
+    var gmapsUrl = 'https://www.google.com/maps/dir/?api=1&travelmode=driving';
+    if (m.localEmbarque) gmapsUrl += '&origin=' + encodeURIComponent(m.localEmbarque);
+    if (m.localDestino)  gmapsUrl += '&destination=' + encodeURIComponent(m.localDestino);
+    c += '<a class="nav-btn gmaps" href="' + esc(gmapsUrl) + '" target="_blank" rel="noopener">';
+    c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>';
+    c += 'MAPS';
+    c += '</a>';
+
+    // Apple Maps — rota com destino (e origem se houver)
+    if (m.localDestino) {
+      var amapsUrl = 'https://maps.apple.com/?q=' + encodeURIComponent(m.localDestino);
+      if (m.localEmbarque) amapsUrl += '&sll=' + encodeURIComponent(m.localEmbarque);
+      amapsUrl += '&dirflg=d';
+      c += '<a class="nav-btn amaps" href="' + esc(amapsUrl) + '" target="_blank" rel="noopener">';
+      c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm-1 13l-3-3 1.4-1.4L11 12.2l4.6-4.6L17 9l-6 6z"/></svg>';
+      c += 'APPLE';
+      c += '</a>';
+    } else {
+      // Sem destino, só com origem — não faz sentido para Apple Maps, deixa vazio
+      c += '<span></span>';
+    }
+
+    c += '</div>'; // nav-grid
+
+    // Botão copiar trajeto (texto formatado para colar em qualquer app)
+    var trajetoTxt = '';
+    if (m.localEmbarque) trajetoTxt += 'ORIGEM: ' + m.localEmbarque;
+    if (m.localEmbarque && m.localDestino) trajetoTxt += '\n➜\n';
+    if (m.localDestino) trajetoTxt += 'DESTINO: ' + m.localDestino;
+
+    c += '<button class="copy-btn" onclick="copiarTrajeto(this, ' + idx + ')" id="btnCopyRoute">';
+    c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+    c += '<span class="copy-label">COPIAR TRAJETO</span>';
+    c += '</button>';
+    c += '</div>'; // nav-section
+  }
+
+  // ── BOTÃO PRINCIPAL: ABRIR FORMULÁRIO TALLY ──
+  var tallyUrl = buildTallyUrl(currentReg, m);
+  c += '<a class="mm-tally" href="' + esc(tallyUrl) + '" target="_blank" rel="noopener">';
+  c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+  c += 'ABRIR FORMULÁRIO DESTA MISSÃO';
+  c += '</a>';
+
+  document.getElementById('mmContent').innerHTML = c;
+  document.getElementById('missionModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMissionModal() {
+  document.getElementById('missionModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Fecha modal com ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMissionModal();
+});
+
+// ── COPIAR TRAJETO PARA ÁREA DE TRANSFERÊNCIA ─────────────
+function copiarTrajeto(btnEl, idx) {
+  var m = currentMissions[idx];
+  if (!m) return;
+
+  var txt = '';
+  if (m.numeroMissao) txt += 'Missão: ' + m.numeroMissao + '\n';
+  if (m.descricao)    txt += 'Tipo: ' + m.descricao + '\n';
+  if (m.horario)      txt += 'Horário: ' + m.horario + '\n';
+  if (m.localEmbarque || m.localDestino) {
+    txt += '\n';
+    if (m.localEmbarque) txt += 'ORIGEM: ' + m.localEmbarque + '\n';
+    if (m.localEmbarque && m.localDestino) txt += '➜\n';
+    if (m.localDestino)  txt += 'DESTINO: ' + m.localDestino + '\n';
+  }
+
+  // Tenta Clipboard API (HTTPS) — fallback para textarea + execCommand
+  function markCopied() {
+    btnEl.classList.add('copied');
+    var lbl = btnEl.querySelector('.copy-label');
+    if (lbl) lbl.textContent = 'TRAJETO COPIADO ✓';
+    setTimeout(function() {
+      btnEl.classList.remove('copied');
+      if (lbl) lbl.textContent = 'COPIAR TRAJETO';
+    }, 2500);
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(markCopied).catch(function() {
+      fallbackCopy(txt);
+      markCopied();
+    });
+  } else {
+    fallbackCopy(txt);
+    markCopied();
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
 }
 
 // ── TALLY URL BUILDER ────────────────────────────────────
