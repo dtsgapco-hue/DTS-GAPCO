@@ -699,7 +699,7 @@
     word-break: break-word;
   }
 
-  /* ── BOTÕES DE NAVEGAÇÃO (Waze / Maps / Apple) ──────── */
+  /* ── BOTÕES DE NAVEGAÇÃO (Maps / Apple) ──────────────── */
   .nav-section {
     margin-top: 16px;
     padding-top: 14px;
@@ -716,7 +716,7 @@
   }
   .nav-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     margin-bottom: 10px;
   }
@@ -742,8 +742,6 @@
   button.nav-btn:disabled { opacity: 0.55; cursor: wait; }
   .nav-btn:active { transform: scale(.97); }
   .nav-btn svg { width: 24px; height: 24px; }
-  .nav-btn.waze   { color: #8fc9ff; border-color: #2a5a8f; }
-  .nav-btn.waze:active   { background: rgba(47,131,222,0.18); }
   .nav-btn.gmaps  { color: #ff9c8f; border-color: #8f3a2f; }
   .nav-btn.gmaps:active  { background: rgba(234,67,32,0.18); }
   .nav-btn.amaps  { color: #ff9cc4; border-color: #8f2f5a; }
@@ -900,7 +898,7 @@ var API = 'https://samed-api.dtsgapco.workers.dev';
 //    URL completa do deploy tem formato:
 //    https://script.google.com/macros/s/AKfycbxxxxXXX/exec
 //    O que vai abaixo é só a parte antes de /exec.
-var API_MISSOES = 'https://script.google.com/macros/s/AKfycbw-5UH5oUjDmS7S-cZSytc01Bs_5DicQSBGDP_DK_NyJDVlyA2Xtyk7bClb6wI6gds2Ag/exec';
+var API_MISSOES = 'https://script.google.com/macros/s/SEU_DEPLOY_ID/exec';
 
 // Helper: retorna data de hoje no formato YYYY-MM-DD (fuso de Brasília).
 function dataHojeISO() {
@@ -914,12 +912,43 @@ function dataHojeISO() {
   return y + '-' + m + '-' + d;
 }
 
+// ── PARÂMETROS DA URL ────────────────────────────────────
+function getUrlParams() {
+  var params = new URLSearchParams(window.location.search);
+  return {
+    regfab: params.get('regfab') || '',
+    sistema: params.get('sistema') || '',
+    numero: params.get('numero') || ''
+  };
+}
+
 // ── INIT ─────────────────────────────────────────────────
 window.addEventListener('load', function() {
   fetch(API + '/viaturas')
     .then(function(r) { return r.json(); })
     .then(function(lista) {
       populateSelect(lista);
+      // Verifica se há regfab na URL
+      var urlParams = getUrlParams();
+      if (urlParams.regfab) {
+        var sel = document.getElementById('regSelect');
+        // Tenta selecionar o valor
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === urlParams.regfab) {
+            sel.value = urlParams.regfab;
+            break;
+          }
+        }
+        // Se não encontrou, tenta adicionar como opção (caso a API não retorne)
+        if (sel.value !== urlParams.regfab) {
+          var opt = document.createElement('option');
+          opt.value = opt.textContent = urlParams.regfab;
+          sel.appendChild(opt);
+          sel.value = urlParams.regfab;
+        }
+        // Dispara o carregamento
+        onRegChange();
+      }
     })
     .catch(function(err) {
       document.getElementById('regSelect').innerHTML =
@@ -955,12 +984,6 @@ function onRegChange() {
     '<div class="state-msg"><div class="spinner"></div>BUSCANDO DADOS...</div>';
 
   // === Fetch paralelo ===
-  // 1) API Cloudflare Workers — dados da viatura (hodômetro, manutenções, checklist, fotos)
-  // 2) API Google Apps Script — missões programadas para hoje
-  //
-  // Se a API Apps Script falhar (deploy errado, CORS, etc.), ainda mostramos os
-  // dados da viatura com a seção de missões vazia — o motorista não fica sem o
-  // resto da vistoria.
   var promiseViatura = fetch(API + '/viatura?id=' + encodeURIComponent(reg))
     .then(function(r) { return r.json(); });
 
@@ -972,7 +995,6 @@ function onRegChange() {
   )
     .then(function(r) { return r.json(); })
     .then(function(j) {
-      // Apps Script retorna { sucesso, total, dados: [...] }
       return (j && j.sucesso && Array.isArray(j.dados)) ? j.dados : [];
     })
     .catch(function(err) {
@@ -985,18 +1007,16 @@ function onRegChange() {
       var d = results[0];
       var missoesAppsScript = results[1];
 
-      // ── Normaliza os dados da viatura (API Cloudflare) ──
+      // ── Normaliza os dados da viatura ──
       var vData = {};
       vData.hodometro = d.hodometro || '—';
 
-      // Manutenções: API retorna antepenultima e ultima; penúltima mostrada como —
       vData.manutencoes = [
         d.manutencao && d.manutencao.antepenultima ? d.manutencao.antepenultima : '—',
         d.manutencao && d.manutencao.penultima     ? d.manutencao.penultima     : '—',
         d.manutencao && d.manutencao.ultima        ? d.manutencao.ultima        : '—'
       ];
 
-      // Checklist: API retorna { "Item": "OK"|"Alt."|"N/V" }
       vData.checklist = [];
       if (d.checklist && typeof d.checklist === 'object') {
         Object.keys(d.checklist).forEach(function(item) {
@@ -1004,27 +1024,16 @@ function onRegChange() {
         });
       }
 
-      // Fotos: fotosViatura → fotos da viatura | fotosManutencao → registros de pane/manutenção
       vData.fotosVeiculo = d.fotosViatura || [];
       vData.fotosPane    = d.fotosManutencao || [];
 
-      // ── Normaliza as missões vindas do Apps Script ──
-      // Campos do Apps Script:
-      //   numero_missao, sistema_origem, tipo_missao, hora_embarque,
-      //   local_embarque, local_destino, motorista, viatura, modelo_viatura,
-      //   observacoes, data_embarque, status
-      //
-      // Campos esperados pelo renderAll():
-      //   horario, sistema, numeroMissao, descricao
-      // ADICIONAL: mantemos os campos extras para o modal "mais informações"
+      // ── Normaliza as missões do Apps Script ──
       var missions = (missoesAppsScript || []).map(function(m) {
         return {
-          // Campos básicos (usados no card e no botão Tally)
           horario:       m.hora_embarque || '--:--',
           sistema:       m.sistema_origem || '',
           numeroMissao:  m.numero_missao || '',
           descricao:     m.tipo_missao || '(sem descrição)',
-          // Campos extras para o modal "mais informações"
           localEmbarque: m.local_embarque || '',
           localDestino:  m.local_destino || '',
           motorista:     m.motorista || '',
@@ -1035,6 +1044,20 @@ function onRegChange() {
           status:        m.status || ''
         };
       });
+
+      // ── Aplica filtro da URL (sistema + numero) ──
+      var urlParams = getUrlParams();
+      var filter = null;
+      if (urlParams.sistema && urlParams.numero) {
+        filter = {
+          sistema: urlParams.sistema,
+          numero: urlParams.numero
+        };
+        // Filtra as missões
+        missions = missions.filter(function(m) {
+          return m.sistema === filter.sistema && m.numeroMissao === filter.numero;
+        });
+      }
 
       renderAll(reg, vData, missions);
     })
@@ -1113,7 +1136,7 @@ function renderAll(reg, vData, missions) {
     }
   }
 
-  // ── MISSÕES DO DIA ──
+  // ── MISSÕES DO DIA (já filtradas) ──
   html += '<div class="section-title"><span class="dot"></span>MISSÕES DO DIA</div>';
 
   if (!missions || missions.length === 0) {
@@ -1133,8 +1156,7 @@ function renderAll(reg, vData, missions) {
         html += '</div>';
       }
 
-      // ── RESUMO DO TRAJETO (origem → destino) ──
-      // Mostra só se houver pelo menos um dos dois locais
+      // ── RESUMO DO TRAJETO ──
       if (m.localEmbarque || m.localDestino) {
         html += '<div class="mission-route">';
         if (m.localEmbarque) {
@@ -1155,7 +1177,7 @@ function renderAll(reg, vData, missions) {
         html += '</div>';
       }
 
-      // ── OBSERVAÇÕES RESUMIDAS (truncadas) no card ──
+      // ── OBSERVAÇÕES RESUMIDAS ──
       if (m.observacoes) {
         var obsCurta = m.observacoes.length > 60
           ? m.observacoes.substring(0, 57) + '...'
@@ -1165,9 +1187,7 @@ function renderAll(reg, vData, missions) {
         html += '</div>';
       }
 
-      // ── BOTÃO "MAIS INFORMAÇÕES" (abre modal) ──
-      // Substitui o botão direto do formulário. O usuário vê detalhes + navegação
-      // antes de abrir o formulário Tally.
+      // ── BOTÃO "MAIS INFORMAÇÕES" ──
       html += '<button class="more-info-btn" onclick="openMissionModal(' + idx + ')">';
       html += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/></svg>';
       html += 'MAIS INFORMAÇÕES';
@@ -1175,15 +1195,6 @@ function renderAll(reg, vData, missions) {
 
       html += '</div>';
     });
-  }
-
-  // Sem missões — botão simples
-  if (vData && (!missions || missions.length === 0)) {
-    var tallyBase = buildTallyUrl(reg, null);
-    html += '<a class="tally-btn" href="' + esc(tallyBase) + '" target="_blank" rel="noopener" style="margin-top:8px">';
-    html += '<svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-    html += 'ABRIR FORMULÁRIO DE SAÍDA';
-    html += '</a>';
   }
 
   // Botão fixo no final — missão não listada (só aparece quando há missões)
@@ -1299,8 +1310,7 @@ function openMissionModal(idx) {
     c += '</div>';
   }
 
-  // ── SEÇÃO DE NAVEGAÇÃO (Waze / Google Maps / Apple Maps) ──
-  // Rota: posição atual (GPS) → embarque (parada 1) → destino (parada 2)
+  // ── SEÇÃO DE NAVEGAÇÃO (Google Maps / Apple Maps) ──
   if (m.localEmbarque || m.localDestino) {
     c += '<div class="nav-section">';
     c += '<div class="nav-section-title">▶ ABRIR ROTA NO NAVEGADOR</div>';
@@ -1310,32 +1320,21 @@ function openMissionModal(idx) {
     c += '</div>';
     c += '<div class="nav-grid">';
 
-    // Google Maps — suporta waypoints (múltiplas paradas)
+    // Google Maps
     c += '<button type="button" class="nav-btn gmaps" onclick="abrirRotaApp(\'gmaps\', ' + idx + ', event)">';
     c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>';
     c += '<span class="nav-btn-label">MAPS</span>';
     c += '</button>';
 
-    // Apple Maps — múltiplas paradas via "+to+" no daddr
+    // Apple Maps
     c += '<button type="button" class="nav-btn amaps" onclick="abrirRotaApp(\'amaps\', ' + idx + ', event)">';
     c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm-1 13l-3-3 1.4-1.4L11 12.2l4.6-4.6L17 9l-6 6z"/></svg>';
     c += '<span class="nav-btn-label">iPHONE</span>';
     c += '</button>';
 
-    // Waze — não suporta múltiplas paradas; abre com EMBARQUE como destino
-    c += '<button type="button" class="nav-btn waze" onclick="abrirRotaApp(\'waze\', ' + idx + ', event)">';
-    c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.1 4.6 2.8 6L6 22l3.2-2.4c.9.3 1.8.4 2.8.4 4.4 0 8-3.6 8-8s-3.6-8-8-8zm0 14.5c-3 0-5.5-2.5-5.5-5.5S9 5.5 12 5.5 17.5 8 17.5 11 15 16.5 12 16.5z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>';
-    c += '<span class="nav-btn-label">WAZE</span>';
-    c += '</button>';
-
     c += '</div>'; // nav-grid
 
-    // Aviso sobre Waze (não suporta múltiplas paradas)
-    c += '<div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);text-align:center;margin:-2px 0 10px;line-height:1.45;">';
-    c += '⚠ Waze: apenas 1ª parada (embarque). Adicione o destino manualmente após o embarque.';
-    c += '</div>';
-
-    // Botão copiar trajeto (texto formatado para colar em qualquer app)
+    // Botão copiar trajeto
     c += '<button type="button" class="copy-btn" onclick="copiarTrajeto(this, ' + idx + ')" id="btnCopyRoute">';
     c += '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
     c += '<span class="copy-label">COPIAR TRAJETO</span>';
@@ -1360,9 +1359,7 @@ function closeMissionModal() {
   document.body.style.overflow = '';
 }
 
-// ── ABRIR ROTA NO APP DE NAVEGAÇÃO (com GPS) ─────────────
-// Rota: posição atual (GPS) → embarque (parada 1) → destino (parada 2)
-// Waze NÃO suporta múltiplas paradas — abre apenas com o embarque.
+// ── ABRIR ROTA NO APP DE NAVEGAÇÃO ──────────────────────
 function abrirRotaApp(app, idx, evt) {
   var m = currentMissions[idx];
   if (!m) return;
@@ -1372,13 +1369,11 @@ function abrirRotaApp(app, idx, evt) {
     return;
   }
 
-  // Sem geolocation no navegador — abre sem origem
   if (!navigator.geolocation) {
     _abrirRotaComURL(app, m, null);
     return;
   }
 
-  // Feedback visual no botão
   var btn = (evt && evt.currentTarget) || null;
   var originalHTML = btn ? btn.innerHTML : '';
   if (btn) {
@@ -1388,7 +1383,6 @@ function abrirRotaApp(app, idx, evt) {
 
   navigator.geolocation.getCurrentPosition(
     function(pos) {
-      // Sucesso — origem = posição atual (lat,lng)
       var origin = pos.coords.latitude + ',' + pos.coords.longitude;
       if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
       _abrirRotaComURL(app, m, origin);
@@ -1409,83 +1403,57 @@ function abrirRotaApp(app, idx, evt) {
   );
 }
 
-// Constrói a URL do app escolhido e abre via window.location.href
-// (universal links — abre o app nativo no iOS/Android).
 function _abrirRotaComURL(app, m, origin) {
   var embarque = m.localEmbarque || '';
   var destino  = m.localDestino  || '';
   var url = '';
+  var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent);
+
+  function plusEnc(s) {
+    return encodeURIComponent(s).replace(/%20/g, '+');
+  }
+  function coordEnc(s) {
+    if (/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(s)) return s;
+    return encodeURIComponent(s);
+  }
+  function addrEnc(s) {
+    return encodeURIComponent(s);
+  }
 
   if (app === 'gmaps') {
-    // Google Maps — suporta waypoints (múltiplas paradas)
-    url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving';
-    if (origin) {
-      // Origem = posição atual; waypoint = embarque; destino = destino
-      url += '&origin=' + encodeURIComponent(origin);
-      if (embarque && destino) {
-        url += '&destination=' + encodeURIComponent(destino);
-        url += '&waypoints=' + encodeURIComponent(embarque);
-      } else if (destino) {
-        url += '&destination=' + encodeURIComponent(destino);
-      } else if (embarque) {
-        url += '&destination=' + encodeURIComponent(embarque);
-      }
-    } else {
-      // Sem GPS — usa embarque como origem (se houver)
-      if (embarque && destino) {
-        url += '&origin=' + encodeURIComponent(embarque);
-        url += '&destination=' + encodeURIComponent(destino);
-      } else if (destino) {
-        url += '&destination=' + encodeURIComponent(destino);
-      } else if (embarque) {
-        url += '&destination=' + encodeURIComponent(embarque);
-      }
-    }
+    var parts = [];
+    if (origin) parts.push(coordEnc(origin));
+    if (embarque) parts.push(addrEnc(embarque));
+    if (destino) parts.push(addrEnc(destino));
+    if (parts.length === 0) return;
+    url = 'https://www.google.com/maps/dir/' + parts.join('/') + '/';
   } else if (app === 'amaps') {
-    // Apple Maps — múltiplas paradas via "+to+" no daddr
     url = 'https://maps.apple.com/?dirflg=d';
     if (origin) {
-      url += '&saddr=' + encodeURIComponent(origin);
-      if (embarque && destino) {
-        url += '&daddr=' + encodeURIComponent(embarque) + '+to+' + encodeURIComponent(destino);
-      } else if (destino) {
-        url += '&daddr=' + encodeURIComponent(destino);
-      } else if (embarque) {
-        url += '&daddr=' + encodeURIComponent(embarque);
-      }
-    } else {
-      // Sem GPS — usa embarque como saddr
-      if (embarque && destino) {
-        url += '&saddr=' + encodeURIComponent(embarque);
-        url += '&daddr=' + encodeURIComponent(destino);
-      } else if (destino) {
-        url += '&daddr=' + encodeURIComponent(destino);
-      } else if (embarque) {
-        url += '&daddr=' + encodeURIComponent(embarque);
-      }
+      url += '&saddr=' + coordEnc(origin);
     }
-  } else if (app === 'waze') {
-    // Waze — NÃO suporta múltiplas paradas via URL.
-    // Estratégia: abrir com EMBARQUE (primeira parada) como destino.
-    // O motorista adiciona o destino manualmente após o embarque.
-    var wazeDest = embarque || destino;
-    if (wazeDest) {
-      url = 'https://waze.com/ul?q=' + encodeURIComponent(wazeDest) + '&navigate=yes';
+    var stops = [];
+    if (embarque) stops.push(plusEnc(embarque));
+    if (destino) stops.push(plusEnc(destino));
+    if (stops.length > 0) {
+      url += '&daddr=' + stops.join('+to+');
     }
   }
 
   if (url) {
-    // location.href abre o app nativo via universal links
-    window.location.href = url;
+    var a = document.createElement('a');
+    a.href = url;
+    if (!isMobile) {
+      a.target = '_blank';
+      a.rel = 'noopener';
+    }
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 }
 
-// Fecha modal com ESC
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeMissionModal();
-});
-
-// ── COPIAR TRAJETO PARA ÁREA DE TRANSFERÊNCIA ─────────────
+// ── COPIAR TRAJETO ────────────────────────────────────────
 function copiarTrajeto(btnEl, idx) {
   var m = currentMissions[idx];
   if (!m) return;
@@ -1501,7 +1469,6 @@ function copiarTrajeto(btnEl, idx) {
     if (m.localDestino)  txt += 'DESTINO: ' + m.localDestino + '\n';
   }
 
-  // Tenta Clipboard API (HTTPS) — fallback para textarea + execCommand
   function markCopied() {
     btnEl.classList.add('copied');
     var lbl = btnEl.querySelector('.copy-label');
@@ -1620,21 +1587,18 @@ lb.addEventListener('touchmove',function(e){
 },{passive:false});
 
 lb.addEventListener('touchend',function(e){
-  // — Pinch terminou —
-  // Aguarda todos os dedos saírem antes de liberar; nunca reseta o zoom
   if(_lb.pinching){
     if(e.touches.length===0){
       _lb.pinching=false;
       _lb.dragging=false;
-      _lb.lastTap=0;  // evita falso duplo-toque
+      _lb.lastTap=0;
       if(_lb.scale<1){_lb.scale=1;_lb.tx=0;_lb.ty=0;_lbApply();}
     }
-    return;  // escapa enquanto ainda há dedo ou logo após pinch
+    return;
   }
 
   _lb.dragging=false;
 
-  // — Duplo-toque —
   if(e.changedTouches.length===1 && e.touches.length===0){
     var now=Date.now();
     if(_lb.lastTap>0 && now-_lb.lastTap<300){
@@ -1655,11 +1619,9 @@ lb.addEventListener('touchend',function(e){
   }
 });
 
-// Fecha clicando no fundo escuro
 lb.addEventListener('click',function(e){
   if(e.target===this||e.target===document.getElementById('lb-wrap')) closeLightbox();
 });
-// Fecha com ESC
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape') closeLightbox();
 });
